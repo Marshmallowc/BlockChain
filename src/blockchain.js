@@ -1,4 +1,6 @@
 const SHA256 = require("crypto-js/sha256");
+const EC = require('elliptic').ec;
+const ec = new EC('secp256k1');
 
 class Transaction{
     constructor(fromAddress, toAddress, amount){
@@ -31,14 +33,6 @@ class Transaction{
         return publicKey.verify(this.caculateHash(), this.signature);
     }
 
-    hasValidTransactions(){
-        for(const tx of this.transactions){
-            if(!tx.isValid()){
-                return false;
-            }
-        }
-        return true;
-    }
 }
 
 class Block {
@@ -56,9 +50,18 @@ class Block {
 
     mineBlock(difficulty){
         while(this.hash.substring(0, difficulty) !== Array(difficulty + 1).join("0")){
-            this.nonce += 10;
+            this.nonce += 1;
             this.hash = this.caculateHash();
         }
+    }
+
+    hasValidTransactions(){
+        for(const tx of this.transactions){
+            if(!tx.isValid()){
+                return false;
+            }
+        }
+        return true;
     }
 }
 
@@ -79,15 +82,16 @@ class Blockchain{
     }
 
     minePendingTransactions(miningRewardAddress){
-       let block = new Block(Date.now(), this.pendingTransactions);
+       const rewardTx = new Transaction(null, miningRewardAddress, this.miningReward);
+       this.pendingTransactions.push(rewardTx);
+
+       let block = new Block(Date.now(), this.pendingTransactions, this.getLastestBlock().hash);
        block.mineBlock(this.difficulty);
 
        console.log("Block successfully mined!");
        this.chain.push(block);
 
-       this.pendingTransactions = [
-        new Transaction(null, miningRewardAddress, this.miningReward)
-       ];
+       this.pendingTransactions = [];
     }
 
     addTransaction(transaction){
@@ -127,7 +131,7 @@ class Blockchain{
         this.chain.push(newBlock)
     }
 
-    isValid(){
+    isChainValid(){
         for(let i = 1; i < this.chain.length; i++){
             const currentBlock = this.chain[i];
             const previousBlock = this.chain[i - 1];

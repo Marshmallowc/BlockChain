@@ -7,11 +7,12 @@ const myWalletAddress = myKey.getPublic('hex');
 
 
 let marshCoin = new Blockchain();
-marshCoin.addTransaction(new Transaction('address1', 'address2', 87));
-marshCoin.addTransaction(new Transaction('address2', 'address1', 32));
+const tx1 = new Transaction(myWalletAddress, 'public key here', 10);
+tx1.signTransaction(myKey);
+marshCoin.addTransaction(tx1)
 
-console.log("\n Starting the miner...");
-marshCoin.minePendingTransactions('marsh-address');
-console.log("\n Balance of Marsh is", marshCoin.getBalanceOfAddress('marsh-address'));
-console.log("\n Balance of Marsh is", marshCoin.getBalanceOfAddress('address1'));
-console.log("\n Balance of Marsh is", marshCoin.getBalanceOfAddress('address2'));
+console.log("start mining ...")
+marshCoin.minePendingTransactions(myWalletAddress);
+console.log('\n my balance is ', marshCoin.getBalanceOfAddress(myWalletAddress));
+
+console.log(marshCoin.isChainValid())
